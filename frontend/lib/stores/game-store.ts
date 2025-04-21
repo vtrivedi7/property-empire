@@ -668,8 +668,16 @@ const createSpecialTile = (
         break
       }
     }
-    // For other specials, place at last swapped position
-    else {
+    // For skyscraper-leveller (5-tile straight), place at swapped-tile cell
+    else if (specialType === "skyscraper-leveller") {
+      const [row, col] = lastSwapped
+      if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+        newGrid[row][col].special = specialType
+        break
+      }
+    }
+    // For renovation-bomb (4-tile), place at last-moved cell
+    else if (specialType === "renovation-bomb") {
       const [row, col] = lastSwapped
       if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
         newGrid[row][col].special = specialType
@@ -774,7 +782,8 @@ const activateSpecialTile = (
       for (let j = 0; j < GRID_SIZE; j++) {
         affectedTiles.push([row, j])
         newGrid[row][j].isMatched = true
-        newGrid[row][j].isSpecialCleared = true // Mark as cleared by special
+        newGrid[row][j].isSpecialCleared = true
+        newGrid[row][j].isClearing = true
       }
       break
 
@@ -785,6 +794,7 @@ const activateSpecialTile = (
           affectedTiles.push([i, j])
           newGrid[i][j].isMatched = true
           newGrid[i][j].isSpecialCleared = true
+          newGrid[i][j].isClearing = true
         }
       }
       break
@@ -795,6 +805,7 @@ const activateSpecialTile = (
         affectedTiles.push([i, col])
         newGrid[i][col].isMatched = true
         newGrid[i][col].isSpecialCleared = true
+        newGrid[i][col].isClearing = true
       }
       break
 
@@ -805,6 +816,7 @@ const activateSpecialTile = (
         affectedTiles.push([row, j])
         newGrid[row][j].isMatched = true
         newGrid[row][j].isSpecialCleared = true
+        newGrid[row][j].isClearing = true
       }
       // Clear column (excluding already cleared center)
       for (let i = 0; i < GRID_SIZE; i++) {
@@ -812,6 +824,7 @@ const activateSpecialTile = (
           affectedTiles.push([i, col])
           newGrid[i][col].isMatched = true
           newGrid[i][col].isSpecialCleared = true
+          newGrid[i][col].isClearing = true
         }
       }
       break
@@ -1009,7 +1022,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             // Check if game over or level complete
             checkGameState()
           }
-        }, 600)
+        }, clearDelay + 100) // Add small buffer for smooth transition
       }, clearDelay)
 
       return
