@@ -1,4 +1,4 @@
-# Property Puzzle Empire
+# Property Empire
 
 A modern web-based property management game where players can build and manage their real estate empire.
 
