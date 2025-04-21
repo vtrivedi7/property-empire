@@ -291,22 +291,16 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
               <TabsTrigger
                 key={region.id}
                 value={region.name.toLowerCase()}
-                disabled={!region.unlocked}
                 className="relative"
                 onMouseEnter={() => !region.unlocked && setShowTooltip(region.name)}
                 onMouseLeave={() => setShowTooltip("")}
               >
-                {region.unlocked ? (
-                  region.name
-                ) : (
-                  <>
-                    <Lock className="h-3 w-3 mr-1" />
-                    {showTooltip === region.name && (
-                      <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                        Complete previous region
-                      </div>
-                    )}
-                  </>
+                {!region.unlocked && <Lock className="h-3 w-3 mr-1" />}
+                {region.name}
+                {showTooltip === region.name && (
+                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Complete previous region
+                  </div>
                 )}
               </TabsTrigger>
             ))}
@@ -318,100 +312,112 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
               value={region.name.toLowerCase()}
               className="space-y-4 max-h-[400px] overflow-y-auto pr-2"
             >
-              {/* Group upgrades by tier */}
-              {[1, 2, 3].map((tier) => {
-                const tierUpgrades = getAvailableUpgrades(region.id).filter(u => u.tier === tier)
-                if (tierUpgrades.length === 0) return null
+              {!region.unlocked ? (
+                <div className="flex flex-col items-center justify-center h-[300px] text-center p-8 bg-gray-50 rounded-lg">
+                  <Lock className="h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    {region.name} Region Locked
+                  </h3>
+                  <p className="text-gray-500">
+                    Complete the previous region to unlock {region.name} and discover new upgrades!
+                  </p>
+                </div>
+              ) : (
+                // Group upgrades by tier
+                [1, 2, 3].map((tier) => {
+                  const tierUpgrades = getAvailableUpgrades(region.id).filter(u => u.tier === tier)
+                  if (tierUpgrades.length === 0) return null
 
-                return (
-                  <div key={tier} className="space-y-3">
-                    <h3 className="font-medium text-sm text-gray-500">
-                      Tier {tier} Upgrades
-                      {tier > 1 && !isRegionUnlocked(tier) && " (Locked)"}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      {tierUpgrades.map((upgrade) => {
-                        const currentLevel = getUpgradeLevel(upgrade.id)
-                        const isMaxLevel = currentLevel >= upgrade.maxLevel
-                        const isAvailable = isUpgradeAvailable(upgrade)
-                        const isAffordable = canAfford(upgrade)
-                        const isSelected = selectedUpgrade?.id === upgrade.id
-                        const nextLevelCost = getNextLevelCost(upgrade)
+                  return (
+                    <div key={tier} className="space-y-3">
+                      <h3 className="font-medium text-sm text-gray-500">
+                        Tier {tier} Upgrades
+                        {tier > 1 && !isRegionUnlocked(tier) && " (Locked)"}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-3">
+                        {tierUpgrades.map((upgrade) => {
+                          const currentLevel = getUpgradeLevel(upgrade.id)
+                          const isMaxLevel = currentLevel >= upgrade.maxLevel
+                          const isAvailable = isUpgradeAvailable(upgrade)
+                          const isAffordable = canAfford(upgrade)
+                          const isSelected = selectedUpgrade?.id === upgrade.id
+                          const nextLevelCost = getNextLevelCost(upgrade)
 
-                        return (
-                          <div
-                            key={upgrade.id}
-                            id={`upgrade-${upgrade.id}`}
-                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                              isMaxLevel
-                                ? "bg-green-50 border-green-200"
-                                : !isAvailable
-                                  ? "bg-gray-100 border-gray-200 opacity-60"
-                                  : isSelected
-                                    ? "bg-blue-50 border-blue-300 shadow-md"
-                                    : isAffordable
-                                      ? "bg-white border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm"
-                                      : "bg-gray-50 border-gray-300 opacity-70"
-                            }`}
-                            onClick={() => isAvailable && !isMaxLevel && setSelectedUpgrade(upgrade)}
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-medium">{upgrade.name}</h3>
-                                  {currentLevel > 0 && (
-                                    <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                      Level {currentLevel}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-gray-600 mt-1">{upgrade.description}</p>
-                                <div className="mt-2 space-y-1">
-                                  <p className="text-xs text-blue-600">
-                                    Current: {upgrade.effect}
-                                  </p>
-                                  {!isMaxLevel && (
-                                    <p className="text-xs text-green-600">
-                                      Next: {upgrade.nextLevelEffect}
+                          return (
+                            <div
+                              key={upgrade.id}
+                              id={`upgrade-${upgrade.id}`}
+                              className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                                isMaxLevel
+                                  ? "bg-green-50 border-green-200"
+                                  : !isAvailable
+                                    ? "bg-gray-100 border-gray-200 opacity-60"
+                                    : isSelected
+                                      ? "bg-blue-50 border-blue-300 shadow-md"
+                                      : isAffordable
+                                        ? "bg-white border-gray-300 hover:bg-blue-50 hover:border-blue-300 hover:shadow-sm"
+                                        : "bg-gray-50 border-gray-300 opacity-70"
+                              }`}
+                              onClick={() => isAvailable && !isMaxLevel && setSelectedUpgrade(upgrade)}
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="font-medium">{upgrade.name}</h3>
+                                    {currentLevel > 0 && (
+                                      <span className="text-xs font-medium bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                        Level {currentLevel}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-600 mt-1">{upgrade.description}</p>
+                                  <div className="mt-2 space-y-1">
+                                    <p className="text-xs text-blue-600">
+                                      Current: {upgrade.effect}
                                     </p>
+                                    {!isMaxLevel && (
+                                      <p className="text-xs text-green-600">
+                                        Next: {upgrade.nextLevelEffect}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  {isMaxLevel ? (
+                                    <span className="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded">
+                                      Max Level
+                                    </span>
+                                  ) : !isAvailable ? (
+                                    <div className="text-xs text-gray-500">
+                                      Requires Level {upgrade.requiredLevel}
+                                    </div>
+                                  ) : (
+                                    <div className="flex flex-col items-end gap-1">
+                                      {Object.entries(nextLevelCost).map(([resource, amount]) => (
+                                        <div
+                                          key={resource}
+                                          className={`flex items-center text-xs px-2 py-1 rounded ${
+                                            resources[resource as keyof typeof resources] >= amount
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-red-100 text-red-800"
+                                          }`}
+                                        >
+                                          <span className="mr-1">{amount}</span>
+                                          <span className="capitalize">{resource}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                              <div className="ml-4">
-                                {isMaxLevel ? (
-                                  <span className="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded">
-                                    Max Level
-                                  </span>
-                                ) : !isAvailable ? (
-                                  <div className="text-xs text-gray-500">
-                                    Requires Level {upgrade.requiredLevel}
-                                  </div>
-                                ) : (
-                                  <div className="flex flex-col items-end gap-1">
-                                    {Object.entries(nextLevelCost).map(([resource, amount]) => (
-                                      <div
-                                        key={resource}
-                                        className={`flex items-center text-xs px-2 py-1 rounded ${
-                                          resources[resource as keyof typeof resources] >= amount
-                                            ? "bg-green-100 text-green-800"
-                                            : "bg-red-100 text-red-800"
-                                        }`}
-                                      >
-                                        <span className="mr-1">{amount}</span>
-                                        <span className="capitalize">{resource}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
                             </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              )}
             </TabsContent>
           ))}
         </Tabs>

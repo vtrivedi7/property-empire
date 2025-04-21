@@ -29,6 +29,7 @@ interface GameState {
   levelComplete: boolean
   gravityDirection: "up" | "down" | "left" | "right"
   settings: GameSettings
+  findMatches: (grid: TileType[][]) => { matches: boolean; matchedTiles: [number, number][]; matchGroups: [number, number][][] }
 
   initializeGame: () => void
   selectTile: (row: number, col: number) => void
@@ -938,6 +939,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     animationSpeed: 1,
     vibrationEnabled: true,
   },
+  findMatches,
 
   initializeGame: () => {
     const { currentLevel } = useLevelStore.getState()

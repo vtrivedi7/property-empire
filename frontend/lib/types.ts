@@ -31,15 +31,19 @@ export interface SelectedTile {
 export type ResourceType = "lumber" | "brick" | "steel" | "cash" | "glass" | "concrete" | "marble" | "copper" | "gold"
 
 export interface Resources {
-  lumber: number
-  brick: number
-  steel: number
-  cash: number
-  glass: number
-  concrete: number
-  marble: number
-  copper: number
-  gold: number
+  lumber: number      // Used for houses and townhouses
+  brick: number       // Used for apartments and condos
+  steel: number       // Used for villas and commercial buildings
+  concrete: number    // Used for all property types
+  glass: number       // Used for modern buildings (apartments, condos, commercial)
+  
+  // Luxury materials
+  marble: number      // Used for villas and luxury properties
+  copper: number      // Used for electrical and plumbing in all properties
+  gold: number        // Used for luxury finishes and commercial properties
+  
+  // Financial resources
+  cash: number        // Universal currency for all transactions
 }
 
 export interface LevelConfig {

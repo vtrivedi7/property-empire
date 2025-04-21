@@ -27,9 +27,11 @@ interface TileProps {
   isSelected: boolean
   isHighlighted?: boolean
   onClick: () => void
+  onMouseDown?: (e: React.MouseEvent) => void
+  onTouchStart?: (e: React.TouchEvent) => void
 }
 
-export default function Tile({ tile, size, row, col, isSelected, isHighlighted = false, onClick }: TileProps) {
+export default function Tile({ tile, size, row, col, isSelected, isHighlighted = false, onClick, onMouseDown, onTouchStart }: TileProps) {
   const getTileIcon = () => {
     // Special tiles
     if (tile.special) {
@@ -131,8 +133,8 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
         className={cn(
           "flex items-center justify-center border rounded-md cursor-pointer transition-all duration-200",
           getTileColor(),
-          isSelected ? "ring-2 ring-offset-2 ring-blue-500 scale-105" : "",
-          isHighlighted ? "ring-2 ring-offset-1 ring-yellow-400 animate-pulse" : "",
+          isSelected ? "ring-2 ring-offset-2 ring-blue-500" : "",
+          isHighlighted ? "ring-2 ring-offset-1 ring-yellow-400" : "",
           tile.isClearing ? "opacity-50" : "",
         )}
         style={{
@@ -141,10 +143,15 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
           position: "relative",
         }}
         onClick={onClick}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         initial={tile.isNew ? { opacity: 0, scale: 0.8 } : false}
         animate={{
           opacity: tile.isMatched ? 0 : 1,
-          scale: tile.isMatched ? 0 : isSelected ? 1.05 : 1,
+          scale: tile.isMatched ? 0 : 1,
+          boxShadow: isSelected 
+            ? "0 0 0 2px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.3)" 
+            : "none",
         }}
         exit={tile.isMatched ? { opacity: 0, scale: 0 } : {}}
         transition={{
@@ -155,6 +162,50 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
         }}
         whileHover={{ scale: 1.05 }}
       >
+        {/* Selected tile indicator */}
+        {isSelected && (
+          <motion.div
+            className="absolute inset-0 rounded-md"
+            style={{
+              boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.3)",
+            }}
+            animate={{
+              boxShadow: [
+                "0 0 0 2px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.3)",
+                "0 0 0 3px rgba(59, 130, 246, 0.5), 0 0 0 6px rgba(59, 130, 246, 0.3)",
+                "0 0 0 2px rgba(59, 130, 246, 0.5), 0 0 0 4px rgba(59, 130, 246, 0.3)",
+              ],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        )}
+
+        {/* Highlighted tile indicator */}
+        {isHighlighted && (
+          <motion.div
+            className="absolute inset-0 rounded-md"
+            style={{
+              boxShadow: "0 0 0 2px rgba(234, 179, 8, 0.5), 0 0 0 4px rgba(234, 179, 8, 0.3)",
+            }}
+            animate={{
+              boxShadow: [
+                "0 0 0 2px rgba(234, 179, 8, 0.5), 0 0 0 4px rgba(234, 179, 8, 0.3)",
+                "0 0 0 3px rgba(234, 179, 8, 0.5), 0 0 0 6px rgba(234, 179, 8, 0.3)",
+                "0 0 0 2px rgba(234, 179, 8, 0.5), 0 0 0 4px rgba(234, 179, 8, 0.3)",
+              ],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        )}
+
         {getTileIcon()}
 
         {/* Hit counter for foundation blocks */}
