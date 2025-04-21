@@ -44,6 +44,18 @@ export const useRegionStore = create<RegionState>((set, get) => ({
         description: "Beautiful beachfront properties with ocean views.",
         unlocked: false,
       },
+      {
+        id: 4,
+        name: "Mountain",
+        description: "Scenic mountain retreats and ski resorts.",
+        unlocked: false,
+      },
+      {
+        id: 5,
+        name: "Metro",
+        description: "The ultimate metropolitan property empire.",
+        unlocked: false,
+      },
     ]
 
     set({

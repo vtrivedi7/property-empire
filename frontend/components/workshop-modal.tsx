@@ -319,7 +319,10 @@ export default function WorkshopModal({ onClose }: WorkshopModalProps) {
                     {region.name} Region Locked
                   </h3>
                   <p className="text-gray-500">
-                    Complete the previous region to unlock {region.name} and discover new upgrades!
+                    {region.id === 2 ? "Complete Suburban Region (Levels 1-3) with at least 1 star each to unlock Urban Region." :
+                     region.id === 3 ? "Complete Urban Region (Levels 4-6) with at least 1 star each to unlock Coastal Region." :
+                     region.id === 4 ? "Complete Coastal Region (Levels 7-9) with at least 1 star each to unlock Mountain Region." :
+                     "Complete Mountain Region (Levels 10-12) with at least 1 star each to unlock Metro Region."}
                   </p>
                 </div>
               ) : (
