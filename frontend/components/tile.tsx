@@ -82,45 +82,45 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
     if (tile.special) {
       switch (tile.special) {
         case "renovation-bomb":
-          return "bg-gradient-to-br from-amber-100 to-amber-300 border-amber-500"
+          return "bg-gradient-to-br from-amber-100 to-amber-300 border-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
         case "market-mixer":
-          return "bg-gradient-to-br from-emerald-100 to-emerald-300 border-emerald-500"
+          return "bg-gradient-to-br from-emerald-100 to-emerald-300 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
         case "skyscraper-leveller":
-          return "bg-gradient-to-br from-blue-100 to-blue-300 border-blue-500"
+          return "bg-gradient-to-br from-blue-100 to-blue-300 border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"
         case "urban-redevelopment":
-          return "bg-gradient-to-br from-purple-100 to-purple-300 border-purple-500"
+          return "bg-gradient-to-br from-purple-100 to-purple-300 border-purple-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]"
       }
     }
 
     // Obstacle tiles
     if (tile.type === "locked-gate") {
-      return "bg-gradient-to-br from-gray-200 to-gray-400 border-gray-500"
+      return "bg-gradient-to-br from-gray-200 to-gray-400 border-gray-500 shadow-[0_0_8px_rgba(107,114,128,0.5)]"
     }
 
     if (tile.type === "foundation-block") {
-      return "bg-gradient-to-br from-stone-300 to-stone-500 border-stone-600"
+      return "bg-gradient-to-br from-stone-300 to-stone-500 border-stone-600 shadow-[0_0_8px_rgba(120,113,108,0.5)]"
     }
 
     if (tile.type === "locked-card") {
       return "bg-gradient-to-br from-orange-200 to-orange-400 border-orange-500"
     }
 
-    // Basic property tiles
+    // Basic property tiles with enhanced visual feedback
     switch (tile.type) {
       case "house":
-        return "bg-green-100 border-green-300"
+        return "bg-gradient-to-br from-green-100 to-green-200 border-green-300 hover:shadow-[0_0_8px_rgba(34,197,94,0.3)]"
       case "apartment":
-        return "bg-blue-100 border-blue-300"
+        return "bg-gradient-to-br from-blue-100 to-blue-200 border-blue-300 hover:shadow-[0_0_8px_rgba(59,130,246,0.3)]"
       case "condo":
-        return "bg-purple-100 border-purple-300"
+        return "bg-gradient-to-br from-purple-100 to-purple-200 border-purple-300 hover:shadow-[0_0_8px_rgba(168,85,247,0.3)]"
       case "townhouse":
-        return "bg-orange-100 border-orange-300"
+        return "bg-gradient-to-br from-orange-100 to-orange-200 border-orange-300 hover:shadow-[0_0_8px_rgba(249,115,22,0.3)]"
       case "villa":
-        return "bg-pink-100 border-pink-300"
+        return "bg-gradient-to-br from-pink-100 to-pink-200 border-pink-300 hover:shadow-[0_0_8px_rgba(236,72,153,0.3)]"
       case "commercial":
-        return "bg-cyan-100 border-cyan-300"
+        return "bg-gradient-to-br from-cyan-100 to-cyan-200 border-cyan-300 hover:shadow-[0_0_8px_rgba(6,182,212,0.3)]"
       default:
-        return "bg-gray-100 border-gray-300"
+        return "bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300"
     }
   }
 
@@ -129,9 +129,9 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
       <motion.div
         key={tile.id}
         className={cn(
-          "flex items-center justify-center border rounded-md cursor-pointer transition-colors",
+          "flex items-center justify-center border rounded-md cursor-pointer transition-all duration-200",
           getTileColor(),
-          isSelected ? "ring-2 ring-offset-2 ring-blue-500" : "",
+          isSelected ? "ring-2 ring-offset-2 ring-blue-500 scale-105" : "",
           isHighlighted ? "ring-2 ring-offset-1 ring-yellow-400 animate-pulse" : "",
           tile.isClearing ? "opacity-50" : "",
         )}
@@ -144,7 +144,7 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
         initial={tile.isNew ? { opacity: 0, scale: 0.8 } : false}
         animate={{
           opacity: tile.isMatched ? 0 : 1,
-          scale: tile.isMatched ? 0 : 1,
+          scale: tile.isMatched ? 0 : isSelected ? 1.05 : 1,
         }}
         exit={tile.isMatched ? { opacity: 0, scale: 0 } : {}}
         transition={{
@@ -153,6 +153,7 @@ export default function Tile({ tile, size, row, col, isSelected, isHighlighted =
           stiffness: 200,
           damping: 20,
         }}
+        whileHover={{ scale: 1.05 }}
       >
         {getTileIcon()}
 

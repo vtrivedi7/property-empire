@@ -42,9 +42,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     cash: 0,
     glass: 0,
     concrete: 0,
-    marble: 0,
-    copper: 0,
-    gold: 0,
   },
   upgradesOwned: [],
 
@@ -58,15 +55,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       coins: 0,
       starsByLevel: {},
       resources: {
-        lumber: 10,
-        brick: 10,
-        steel: 10,
-        cash: 10,
+        lumber: 0,
+        brick: 0,
+        steel: 0,
+        cash: 0,
         glass: 0,
         concrete: 0,
-        marble: 0,
-        copper: 0,
-        gold: 0,
       },
       upgradesOwned: [],
     })
@@ -99,19 +93,20 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   addResources: (newResources: Resources) => {
-    set((state) => ({
-      resources: {
-        lumber: state.resources.lumber + (newResources.lumber || 0),
-        brick: state.resources.brick + (newResources.brick || 0),
-        steel: state.resources.steel + (newResources.steel || 0),
-        cash: state.resources.cash + (newResources.cash || 0),
-        glass: state.resources.glass + (newResources.glass || 0),
-        concrete: state.resources.concrete + (newResources.concrete || 0),
-        marble: state.resources.marble + (newResources.marble || 0),
-        copper: state.resources.copper + (newResources.copper || 0),
-        gold: state.resources.gold + (newResources.gold || 0),
-      },
-    }))
+    set((state) => {
+      const resourceYieldBonus = state.upgradesOwned.includes("resource_yield") ? 1 : 0
+      
+      return {
+        resources: {
+          lumber: state.resources.lumber + (newResources.lumber || 0) * (1 + resourceYieldBonus),
+          brick: state.resources.brick + (newResources.brick || 0) * (1 + resourceYieldBonus),
+          steel: state.resources.steel + (newResources.steel || 0) * (1 + resourceYieldBonus),
+          cash: state.resources.cash + (newResources.cash || 0) * (1 + resourceYieldBonus),
+          glass: state.resources.glass + (newResources.glass || 0) * (1 + resourceYieldBonus),
+          concrete: state.resources.concrete + (newResources.concrete || 0) * (1 + resourceYieldBonus),
+        },
+      }
+    })
   },
 
   calculateXpToNextLevel: () => {
@@ -182,8 +177,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
       // Apply special effects for certain upgrades
       let newMaxEnergy = maxEnergy
-      if (upgradeId === "energy_boost") {
-        newMaxEnergy += 1
+      if (upgradeId === "extra_moves") {
+        // Extra Moves upgrade: +2 moves per level
+        const extraMovesLevel = upgradesOwned.filter(id => id === "extra_moves").length + 1
+        newMaxEnergy += 2
       }
 
       // Add upgrade to owned list
@@ -191,7 +188,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         resources: newResources,
         upgradesOwned: [...upgradesOwned, upgradeId],
         maxEnergy: newMaxEnergy,
-        energy: Math.min(get().energy + 1, newMaxEnergy), // Refill one energy when purchasing energy boost
+        energy: Math.min(get().energy + 1, newMaxEnergy), // Refill one energy when purchasing upgrade
       })
     }
   },

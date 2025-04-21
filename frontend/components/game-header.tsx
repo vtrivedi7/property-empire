@@ -59,7 +59,7 @@ export default function GameHeader({ onWorkshopClick }: GameHeaderProps) {
           XP: {playerXP} / {xpToNextLevel}
         </div>
       </div>
-      <Progress value={xpProgressPercentage} className="h-1.5 bg-blue-100" indicatorClassName="bg-blue-500" />
+      <Progress value={xpProgressPercentage} className="h-1.5 bg-blue-100 [&>div]:bg-blue-500" />
 
       <div className="flex justify-between items-center">
         <div className="text-sm font-medium">

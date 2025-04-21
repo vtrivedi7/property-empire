@@ -27,7 +27,7 @@ interface GameState {
   invalidSwap: boolean
   gameOver: boolean
   levelComplete: boolean
-  gravityDirection: "vertical" | "horizontal"
+  gravityDirection: "up" | "down" | "left" | "right"
   settings: GameSettings
 
   initializeGame: () => void
@@ -401,66 +401,126 @@ const updateObstacles = (grid: TileType[][], matchedTiles: [number, number][]): 
 }
 
 // Gravity fill algorithm
-const clearMatchedTiles = (grid: TileType[][], direction: "vertical" | "horizontal"): TileType[][] => {
+const clearMatchedTiles = (grid: TileType[][], direction: "up" | "down" | "left" | "right"): TileType[][] => {
   const newGrid = [...grid.map((row) => [...row])]
 
-  if (direction === "vertical") {
-    // Traditional vertical gravity (columns collapse)
+  if (direction === "down") {
+    // Process each column from bottom to top
     for (let j = 0; j < GRID_SIZE; j++) {
-      // Count matched tiles in this column
-      let matchedCount = 0
+      let emptySpaces = 0
+      
+      // First pass: Count empty spaces and move tiles down
       for (let i = GRID_SIZE - 1; i >= 0; i--) {
         if (newGrid[i][j].isMatched) {
-          matchedCount++
-        } else if (matchedCount > 0) {
-          // Move tile down by matchedCount
-          newGrid[i + matchedCount][j] = { ...newGrid[i][j] }
-          newGrid[i][j].isMatched = true
+          emptySpaces++
+        } else if (emptySpaces > 0 && !isObstacleTile(newGrid[i][j])) {
+          // Move tile down by emptySpaces
+          newGrid[i + emptySpaces][j] = { ...newGrid[i][j], isNew: true }
+          newGrid[i][j] = { ...newGrid[i][j], isMatched: true }
         }
       }
 
-      // Fill the top with new tiles
-      for (let i = 0; i < GRID_SIZE; i++) {
-        if (newGrid[i][j].isMatched) {
-          const newType = getRandomTileType()
-          newGrid[i][j] = {
-            id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
-            type: newType,
-            isMatched: false,
-            special: null,
-            resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
-            isNew: true,
-          }
+      // Second pass: Fill empty spaces at top with new tiles
+      for (let i = 0; i < emptySpaces; i++) {
+        const newType = getRandomTileType()
+        newGrid[i][j] = {
+          id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
+          type: newType,
+          isMatched: false,
+          special: null,
+          resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
+          isNew: true,
+          fallingFrom: -1, // Start above the grid
         }
       }
     }
-  } else {
-    // Horizontal gravity (rows collapse from right to left)
-    for (let i = 0; i < GRID_SIZE; i++) {
-      // Count matched tiles in this row
-      let matchedCount = 0
-      for (let j = GRID_SIZE - 1; j >= 0; j--) {
+  } else if (direction === "up") {
+    // Process each column from top to bottom
+    for (let j = 0; j < GRID_SIZE; j++) {
+      let emptySpaces = 0
+      
+      // First pass: Count empty spaces and move tiles up
+      for (let i = 0; i < GRID_SIZE; i++) {
         if (newGrid[i][j].isMatched) {
-          matchedCount++
-        } else if (matchedCount > 0) {
-          // Move tile right by matchedCount
-          newGrid[i][j + matchedCount] = { ...newGrid[i][j] }
-          newGrid[i][j].isMatched = true
+          emptySpaces++
+        } else if (emptySpaces > 0 && !isObstacleTile(newGrid[i][j])) {
+          // Move tile up by emptySpaces
+          newGrid[i - emptySpaces][j] = { ...newGrid[i][j], isNew: true }
+          newGrid[i][j] = { ...newGrid[i][j], isMatched: true }
         }
       }
 
-      // Fill the left with new tiles
+      // Second pass: Fill empty spaces at bottom with new tiles
+      for (let i = GRID_SIZE - 1; i >= GRID_SIZE - emptySpaces; i--) {
+        const newType = getRandomTileType()
+        newGrid[i][j] = {
+          id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
+          type: newType,
+          isMatched: false,
+          special: null,
+          resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
+          isNew: true,
+          fallingFrom: GRID_SIZE, // Start below the grid
+        }
+      }
+    }
+  } else if (direction === "right") {
+    // Process each row from right to left
+    for (let i = 0; i < GRID_SIZE; i++) {
+      let emptySpaces = 0
+      
+      // First pass: Count empty spaces and move tiles right
+      for (let j = GRID_SIZE - 1; j >= 0; j--) {
+        if (newGrid[i][j].isMatched) {
+          emptySpaces++
+        } else if (emptySpaces > 0 && !isObstacleTile(newGrid[i][j])) {
+          // Move tile right by emptySpaces
+          newGrid[i][j + emptySpaces] = { ...newGrid[i][j], isNew: true }
+          newGrid[i][j] = { ...newGrid[i][j], isMatched: true }
+        }
+      }
+
+      // Second pass: Fill empty spaces at left with new tiles
+      for (let j = 0; j < emptySpaces; j++) {
+        const newType = getRandomTileType()
+        newGrid[i][j] = {
+          id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
+          type: newType,
+          isMatched: false,
+          special: null,
+          resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
+          isNew: true,
+          fallingFrom: -1, // Start left of the grid
+        }
+      }
+    }
+  } else if (direction === "left") {
+    // Process each row from left to right
+    for (let i = 0; i < GRID_SIZE; i++) {
+      let emptySpaces = 0
+      
+      // First pass: Count empty spaces and move tiles left
       for (let j = 0; j < GRID_SIZE; j++) {
         if (newGrid[i][j].isMatched) {
-          const newType = getRandomTileType()
-          newGrid[i][j] = {
-            id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
-            type: newType,
-            isMatched: false,
-            special: null,
-            resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
-            isNew: true,
-          }
+          emptySpaces++
+        } else if (emptySpaces > 0 && !isObstacleTile(newGrid[i][j])) {
+          // Move tile left by emptySpaces
+          newGrid[i][j - emptySpaces] = { ...newGrid[i][j], isNew: true }
+          newGrid[i][j] = { ...newGrid[i][j], isMatched: true }
+        }
+      }
+
+      // Second pass: Fill empty spaces at right with new tiles
+      for (let j = GRID_SIZE - 1; j >= GRID_SIZE - emptySpaces; j--) {
+        const newType = getRandomTileType()
+        newGrid[i][j] = {
+          id: `new-${i}-${j}-${Math.random().toString(36).substring(2, 9)}`,
+          type: newType,
+          isMatched: false,
+          special: null,
+          resourceType: RESOURCE_MAPPING[newType as keyof typeof RESOURCE_MAPPING],
+          isNew: true,
+          fallingFrom: GRID_SIZE, // Start right of the grid
         }
       }
     }
@@ -469,157 +529,115 @@ const clearMatchedTiles = (grid: TileType[][], direction: "vertical" | "horizont
   return newGrid
 }
 
+const isObstacleTile = (tile: TileType): boolean => {
+  return (
+    tile.type === "locked-gate" ||
+    tile.type === "foundation-block" ||
+    tile.type === "locked-card"
+  )
+}
+
 // Determine special tile type based on match pattern
 const determineSpecialTileType = (matchGroup: [number, number][], lastSwapped: [number, number]): SpecialTileType => {
-  const { upgradesOwned } = usePlayerStore.getState()
-  const specialThresholdReduced = upgradesOwned.includes("special_threshold") ? 1 : 0
+  const length = matchGroup.length
+  const isStraight = isStraightLine(matchGroup)
+  const isT_or_L = isT_or_L_Shape(matchGroup)
+  const isCross = isCrossShape(matchGroup)
 
-  // Check if special tile chance upgrade is owned
-  const hasSpecialChanceUpgrade = upgradesOwned.includes("special_chance")
-
-  // Random chance to create a special tile if the upgrade is owned
-  if (hasSpecialChanceUpgrade && matchGroup.length === 3 && Math.random() < 0.15) {
-    // 15% chance to create a renovation bomb from a 3-match if upgrade is owned
+  if (length === 4 && isStraight) {
     return "renovation-bomb"
-  }
-
-  // Check if the last swapped tile is in the match group
-  const isLastSwappedInMatch = matchGroup.some(([r, c]) => r === lastSwapped[0] && c === lastSwapped[1])
-  if (!isLastSwappedInMatch) return null
-
-  // Length = 4 (straight) -> Renovation Bomb
-  if (matchGroup.length === 4 - specialThresholdReduced) {
-    // Check if it's a straight line
-    const rows = new Set(matchGroup.map(([r, _]) => r))
-    const cols = new Set(matchGroup.map(([_, c]) => c))
-
-    if (rows.size === 1 || cols.size === 1) {
-      return "renovation-bomb"
-    }
-  }
-
-  // Length = 5 (straight) -> Skyscraper Leveller
-  if (matchGroup.length === 5 - specialThresholdReduced) {
-    const rows = new Set(matchGroup.map(([r, _]) => r))
-    const cols = new Set(matchGroup.map(([_, c]) => c))
-
-    if (rows.size === 1 || cols.size === 1) {
-      return "skyscraper-leveller"
-    }
-
-    // Length = 5 (T/L shape) -> Market Mixer
-    // Check for T or L shape
-    const isT_or_L_Shape = (tiles: [number, number][]): boolean => {
-      // Create a set of positions for quick lookup
-      const positions = new Set(tiles.map(([r, c]) => `${r},${c}`))
-
-      // Check for each possible T or L shape centered at the pivot
-      for (const [pivotRow, pivotCol] of tiles) {
-        // T shapes
-        if (
-          positions.has(`${pivotRow},${pivotCol - 1}`) &&
-          positions.has(`${pivotRow},${pivotCol + 1}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow},${pivotCol - 1}`) &&
-          positions.has(`${pivotRow},${pivotCol + 1}`) &&
-          positions.has(`${pivotRow - 1},${pivotCol}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow - 1},${pivotCol}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`) &&
-          positions.has(`${pivotRow},${pivotCol + 1}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow - 1},${pivotCol}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`) &&
-          positions.has(`${pivotRow},${pivotCol - 1}`)
-        ) {
-          return true
-        }
-
-        // L shapes
-        if (
-          positions.has(`${pivotRow},${pivotCol + 1}`) &&
-          positions.has(`${pivotRow},${pivotCol + 2}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`) &&
-          positions.has(`${pivotRow + 2},${pivotCol}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow},${pivotCol - 1}`) &&
-          positions.has(`${pivotRow},${pivotCol - 2}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`) &&
-          positions.has(`${pivotRow + 2},${pivotCol}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow},${pivotCol + 1}`) &&
-          positions.has(`${pivotRow},${pivotCol + 2}`) &&
-          positions.has(`${pivotRow - 1},${pivotCol}`) &&
-          positions.has(`${pivotRow - 2},${pivotCol}`)
-        ) {
-          return true
-        }
-
-        if (
-          positions.has(`${pivotRow},${pivotCol - 1}`) &&
-          positions.has(`${pivotRow},${pivotCol - 2}`) &&
-          positions.has(`${pivotRow - 1},${pivotCol}`) &&
-          positions.has(`${pivotRow - 2},${pivotCol}`)
-        ) {
-          return true
-        }
-      }
-
-      return false
-    }
-
-    if (isT_or_L_Shape(matchGroup)) {
-      return "market-mixer"
-    }
-  }
-
-  // Length >= 6 (cross shape) -> Urban Redevelopment
-  if (matchGroup.length >= 6 - specialThresholdReduced) {
-    // Check for cross shape
-    const isCrossShape = (tiles: [number, number][]): boolean => {
-      const positions = new Set(tiles.map(([r, c]) => `${r},${c}`))
-
-      for (const [pivotRow, pivotCol] of tiles) {
-        if (
-          positions.has(`${pivotRow - 1},${pivotCol}`) &&
-          positions.has(`${pivotRow + 1},${pivotCol}`) &&
-          positions.has(`${pivotRow},${pivotCol - 1}`) &&
-          positions.has(`${pivotRow},${pivotCol + 1}`)
-        ) {
-          return true
-        }
-      }
-
-      return false
-    }
-
-    if (isCrossShape(matchGroup)) {
-      return "urban-redevelopment"
-    }
+  } else if (length === 5 && isT_or_L) {
+    return "market-mixer"
+  } else if (length === 5 && isStraight) {
+    return "skyscraper-leveller"
+  } else if (length >= 6 && isCross) {
+    return "urban-redevelopment"
   }
 
   return null
+}
+
+const isStraightLine = (tiles: [number, number][]): boolean => {
+  if (tiles.length < 3) return false
+
+  // Check if all tiles are in the same row
+  const sameRow = tiles.every(([row]) => row === tiles[0][0])
+  if (sameRow) return true
+
+  // Check if all tiles are in the same column
+  const sameCol = tiles.every(([, col]) => col === tiles[0][1])
+  if (sameCol) return true
+
+  return false
+}
+
+const isT_or_L_Shape = (tiles: [number, number][]): boolean => {
+  if (tiles.length !== 5) return false
+
+  // Sort tiles by row and column
+  const sortedByRow = [...tiles].sort((a, b) => a[0] - b[0])
+  const sortedByCol = [...tiles].sort((a, b) => a[1] - b[1])
+
+  // Check for T shape
+  const hasTShape = () => {
+    // Find the middle row (should have 3 tiles)
+    const middleRow = sortedByRow[2][0]
+    const tilesInMiddleRow = tiles.filter(([row]) => row === middleRow)
+    if (tilesInMiddleRow.length !== 3) return false
+
+    // Find the middle column (should have 3 tiles)
+    const middleCol = sortedByCol[2][1]
+    const tilesInMiddleCol = tiles.filter(([, col]) => col === middleCol)
+    if (tilesInMiddleCol.length !== 3) return false
+
+    // Check if the intersection point exists
+    return tiles.some(([row, col]) => row === middleRow && col === middleCol)
+  }
+
+  // Check for L shape
+  const hasLShape = () => {
+    // Find the corner (should have 3 tiles in one row and 3 tiles in one column)
+    const rowCounts = new Map<number, number>()
+    const colCounts = new Map<number, number>()
+    
+    tiles.forEach(([row, col]) => {
+      rowCounts.set(row, (rowCounts.get(row) || 0) + 1)
+      colCounts.set(col, (colCounts.get(col) || 0) + 1)
+    })
+
+    // Find rows and columns with 3 tiles
+    const rowsWith3 = Array.from(rowCounts.entries()).filter(([_, count]) => count === 3)
+    const colsWith3 = Array.from(colCounts.entries()).filter(([_, count]) => count === 3)
+
+    if (rowsWith3.length !== 1 || colsWith3.length !== 1) return false
+
+    const [rowWith3] = rowsWith3[0]
+    const [colWith3] = colsWith3[0]
+
+    // Check if the corner point exists
+    return tiles.some(([row, col]) => row === rowWith3 && col === colWith3)
+  }
+
+  return hasTShape() || hasLShape()
+}
+
+const isCrossShape = (tiles: [number, number][]): boolean => {
+  if (tiles.length < 6) return false
+
+  // Find center tile (if any)
+  const centerRow = Math.floor(tiles.reduce((sum, [row]) => sum + row, 0) / tiles.length)
+  const centerCol = Math.floor(tiles.reduce((sum, [, col]) => sum + col, 0) / tiles.length)
+
+  // Check if there's a center tile
+  const hasCenter = tiles.some(([row, col]) => row === centerRow && col === centerCol)
+  if (!hasCenter) return false
+
+  // Count tiles in each direction from center
+  const horizontal = tiles.filter(([row, col]) => row === centerRow).length
+  const vertical = tiles.filter(([row, col]) => col === centerCol).length
+
+  // Must have at least 3 tiles in each direction
+  return horizontal >= 3 && vertical >= 3
 }
 
 // Create special tile at the last swapped position
@@ -632,31 +650,90 @@ const createSpecialTile = (
 
   for (const matchGroup of matchGroups) {
     const specialType = determineSpecialTileType(matchGroup, lastSwapped)
+    if (!specialType) continue
 
-    if (specialType) {
-      const [row, col] = lastSwapped
-
-      // Only create special tile if the last swapped position is not an obstacle
-      if (
-        newGrid[row][col].type !== "locked-gate" &&
-        newGrid[row][col].type !== "foundation-block" &&
-        newGrid[row][col].type !== "locked-card"
-      ) {
-        newGrid[row][col].special = specialType
+    // For market-mixer (T/L shape), place at pivot
+    if (specialType === "market-mixer") {
+      const pivot = findPivotTile(matchGroup)
+      if (pivot) {
+        newGrid[pivot[0]][pivot[1]].special = specialType
+        break
       }
-
-      break // Only create one special tile per swap
+    }
+    // For urban-redevelopment (cross), place at center
+    else if (specialType === "urban-redevelopment") {
+      const center = findCenterTile(matchGroup)
+      if (center) {
+        newGrid[center[0]][center[1]].special = specialType
+        break
+      }
+    }
+    // For other specials, place at last swapped position
+    else {
+      const [row, col] = lastSwapped
+      if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+        newGrid[row][col].special = specialType
+        break
+      }
     }
   }
 
   return newGrid
 }
 
+// Helper function to find pivot tile in T/L shape
+const findPivotTile = (tiles: [number, number][]): [number, number] | null => {
+  // For T shape: the middle tile of the top/bottom row
+  // For L shape: the corner tile
+  if (tiles.length !== 5) return null
+
+  // Sort tiles by row and column
+  const byRow = [...tiles].sort((a, b) => a[0] - b[0])
+  const byCol = [...tiles].sort((a, b) => a[1] - b[1])
+
+  // Find tile that connects both segments
+  for (const [row, col] of tiles) {
+    let horizontalCount = tiles.filter(t => t[0] === row).length
+    let verticalCount = tiles.filter(t => t[1] === col).length
+    
+    if (horizontalCount >= 2 && verticalCount >= 2) {
+      return [row, col]
+    }
+  }
+
+  return null
+}
+
+// Helper function to find center tile in cross shape
+const findCenterTile = (tiles: [number, number][]): [number, number] | null => {
+  if (tiles.length < 6) return null
+
+  // Calculate average position (center)
+  const centerRow = Math.round(tiles.reduce((sum, [row]) => sum + row, 0) / tiles.length)
+  const centerCol = Math.round(tiles.reduce((sum, [, col]) => sum + col, 0) / tiles.length)
+
+  // Find the tile closest to center that has both horizontal and vertical matches
+  let centerTile: [number, number] | null = null
+  let minDistance = Infinity
+
+  for (const [row, col] of tiles) {
+    const horizontalCount = tiles.filter(t => t[0] === row).length
+    const verticalCount = tiles.filter(t => t[1] === col).length
+    
+    if (horizontalCount >= 3 && verticalCount >= 3) {
+      const distance = Math.abs(row - centerRow) + Math.abs(col - centerCol)
+      if (distance < minDistance) {
+        minDistance = distance
+        centerTile = [row, col]
+      }
+    }
+  }
+
+  return centerTile
+}
+
 // Calculate resources gained from matches
 const calculateResourceGain = (matchedTiles: [number, number][], grid: TileType[][]): Resources => {
-  const { upgradesOwned } = usePlayerStore.getState()
-  const resourceYieldBonus = upgradesOwned.includes("resource_yield") ? 1 : 0
-
   const resources: Resources = {
     lumber: 0,
     brick: 0,
@@ -664,15 +741,12 @@ const calculateResourceGain = (matchedTiles: [number, number][], grid: TileType[
     cash: 0,
     glass: 0,
     concrete: 0,
-    marble: 0,
-    copper: 0,
-    gold: 0,
   }
 
   matchedTiles.forEach(([row, col]) => {
-    const resourceType = grid[row][col].resourceType
-    if (resourceType) {
-      resources[resourceType as keyof Resources] += 1 + resourceYieldBonus
+    const tile = grid[row][col]
+    if (tile.resourceType) {
+      resources[tile.resourceType]++
     }
   })
 
@@ -688,81 +762,56 @@ const activateSpecialTile = (
   grid: TileType[][]
   affectedTiles: [number, number][]
 } => {
-  const newGrid = [...grid.map((r) => [...r])]
+  const tile = grid[row][col]
+  if (!tile.special) return { grid, affectedTiles: [] }
+
   const affectedTiles: [number, number][] = []
-  const special = newGrid[row][col].special
+  const newGrid = [...grid.map(row => [...row])]
 
-  if (!special) return { grid: newGrid, affectedTiles }
-
-  // Mark the special tile itself as clearing
-  newGrid[row][col].isClearing = true
-
-  switch (special) {
+  switch (tile.special) {
     case "renovation-bomb":
-      // Clear entire row
+      // Clear entire row (placed at last-moved cell)
       for (let j = 0; j < GRID_SIZE; j++) {
-        if (
-          newGrid[row][j].type !== "locked-gate" &&
-          newGrid[row][j].type !== "foundation-block" &&
-          newGrid[row][j].type !== "locked-card"
-        ) {
-          newGrid[row][j].isMatched = true
-          affectedTiles.push([row, j])
-        }
+        affectedTiles.push([row, j])
+        newGrid[row][j].isMatched = true
+        newGrid[row][j].isSpecialCleared = true // Mark as cleared by special
       }
       break
 
     case "market-mixer":
-      // Clear 3x3 block
+      // Clear 3x3 block (placed at pivot cell of T/L shape)
       for (let i = Math.max(0, row - 1); i <= Math.min(GRID_SIZE - 1, row + 1); i++) {
         for (let j = Math.max(0, col - 1); j <= Math.min(GRID_SIZE - 1, col + 1); j++) {
-          if (
-            newGrid[i][j].type !== "locked-gate" &&
-            newGrid[i][j].type !== "foundation-block" &&
-            newGrid[i][j].type !== "locked-card"
-          ) {
-            newGrid[i][j].isMatched = true
-            affectedTiles.push([i, j])
-          }
+          affectedTiles.push([i, j])
+          newGrid[i][j].isMatched = true
+          newGrid[i][j].isSpecialCleared = true
         }
       }
       break
 
     case "skyscraper-leveller":
-      // Clear entire column
+      // Clear entire column (placed at swapped-tile cell)
       for (let i = 0; i < GRID_SIZE; i++) {
-        if (
-          newGrid[i][col].type !== "locked-gate" &&
-          newGrid[i][col].type !== "foundation-block" &&
-          newGrid[i][col].type !== "locked-card"
-        ) {
-          newGrid[i][col].isMatched = true
-          affectedTiles.push([i, col])
-        }
+        affectedTiles.push([i, col])
+        newGrid[i][col].isMatched = true
+        newGrid[i][col].isSpecialCleared = true
       }
       break
 
     case "urban-redevelopment":
-      // Clear entire row and column
-      for (let i = 0; i < GRID_SIZE; i++) {
-        if (
-          newGrid[i][col].type !== "locked-gate" &&
-          newGrid[i][col].type !== "foundation-block" &&
-          newGrid[i][col].type !== "locked-card"
-        ) {
-          newGrid[i][col].isMatched = true
-          affectedTiles.push([i, col])
-        }
-      }
+      // Clear entire row and column (placed at center of cross)
+      // Clear row
       for (let j = 0; j < GRID_SIZE; j++) {
-        if (
-          j !== col &&
-          newGrid[row][j].type !== "locked-gate" &&
-          newGrid[row][j].type !== "foundation-block" &&
-          newGrid[row][j].type !== "locked-card"
-        ) {
-          newGrid[row][j].isMatched = true
-          affectedTiles.push([row, j])
+        affectedTiles.push([row, j])
+        newGrid[row][j].isMatched = true
+        newGrid[row][j].isSpecialCleared = true
+      }
+      // Clear column (excluding already cleared center)
+      for (let i = 0; i < GRID_SIZE; i++) {
+        if (i !== row) {
+          affectedTiles.push([i, col])
+          newGrid[i][col].isMatched = true
+          newGrid[i][col].isSpecialCleared = true
         }
       }
       break
@@ -823,28 +872,40 @@ const processCascadingMatches = (grid: TileType[][]) => {
 
     // After animation, clear matched tiles and apply gravity
     setTimeout(() => {
-      // Randomly choose gravity direction
-      const newDirection = Math.random() < 0.5 ? "vertical" : "horizontal"
-
-      const clearedGrid = clearMatchedTiles(updatedGrid, newDirection)
+      // Get the current gravity direction (set during the initial swap)
+      const { gravityDirection } = useGameStore.getState()
+      
+      // Apply gravity with the current direction
+      const clearedGrid = clearMatchedTiles(updatedGrid, gravityDirection)
+      
       useGameStore.setState({
         grid: clearedGrid,
         isAnimating: false,
-        gravityDirection: newDirection,
       })
 
-      // Check for more cascading matches
+      // Check for more cascading matches after a longer delay
       setTimeout(() => {
         const { matches } = findMatches(clearedGrid)
         if (matches) {
           processCascadingMatches(clearedGrid)
         } else {
+          // After all cascading matches are complete, set the new gravity direction for the next move
+          const newDirection = getRandomDirection()
+          useGameStore.setState({
+            gravityDirection: newDirection,
+          })
           // Check if game over or level complete
           checkGameState()
         }
-      }, 300)
-    }, 250)
+      }, 600)
+    }, 500)
   }
+}
+
+// Update the random direction selection
+const getRandomDirection = (): "up" | "down" | "left" | "right" => {
+  const directions: ("up" | "down" | "left" | "right")[] = ["up", "down", "left", "right"]
+  return directions[Math.floor(Math.random() * directions.length)]
 }
 
 // Update the useGameStore to remove tutorial-related state and functions
@@ -857,7 +918,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   invalidSwap: false,
   gameOver: false,
   levelComplete: false,
-  gravityDirection: "vertical",
+  gravityDirection: "down",
   settings: {
     soundEnabled: true,
     musicEnabled: true,
@@ -873,7 +934,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const extraMoves = upgradesOwned.includes("extra_moves") ? 2 : 0
 
     // Randomly choose gravity direction
-    const gravityDirection = Math.random() < 0.5 ? "vertical" : "horizontal"
+    const gravityDirection = getRandomDirection()
 
     set({
       grid: createEmptyGrid(currentLevel.id),
@@ -923,10 +984,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Update resources
       usePlayerStore.getState().addResources(resourceGain)
 
-      // After animation, clear matched tiles and apply gravity
+      // Special tile clear animation timing
+      const clearDelay = tile.special === "urban-redevelopment" ? 400 : 300
+
+      // After special clear animation, apply gravity
       setTimeout(() => {
         // Randomly choose gravity direction
-        const newDirection = Math.random() < 0.5 ? "vertical" : "horizontal"
+        const newDirection = getRandomDirection()
 
         const clearedGrid = clearMatchedTiles(updatedGrid, newDirection)
         set({
@@ -945,8 +1009,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             // Check if game over or level complete
             checkGameState()
           }
-        }, 300)
-      }, 300)
+        }, 600)
+      }, clearDelay)
 
       return
     }
@@ -961,27 +1025,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
     // Don't allow swaps during animations
     if (isAnimating) return
-
-    // Don't allow swapping with locked gates, foundation blocks, or locked cards
-    if (
-      grid[row1][col1].type === "locked-gate" ||
-      grid[row1][col1].type === "foundation-block" ||
-      grid[row1][col1].type === "locked-card" ||
-      grid[row2][col2].type === "locked-gate" ||
-      grid[row2][col2].type === "foundation-block" ||
-      grid[row2][col2].type === "locked-card"
-    ) {
-      set({ invalidSwap: true })
-
-      setTimeout(() => {
-        set({
-          invalidSwap: false,
-          selectedTile: null,
-        })
-      }, 150)
-
-      return
-    }
 
     // Create a copy of the grid
     const newGrid = [...grid.map((row) => [...row])]
@@ -1047,29 +1090,35 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       // After animation, clear matched tiles and apply gravity
       setTimeout(() => {
-        // Randomly choose gravity direction
-        const newDirection = Math.random() < 0.5 ? "vertical" : "horizontal"
-
-        const clearedGrid = clearMatchedTiles(updatedGrid, newDirection)
+        // Get the current gravity direction (set at the start of this move)
+        const { gravityDirection } = get()
+        
+        // Apply gravity with the current direction
+        const clearedGrid = clearMatchedTiles(updatedGrid, gravityDirection)
+        
         set({
           grid: clearedGrid,
           isAnimating: false,
-          gravityDirection: newDirection,
           movesRemaining: get().movesRemaining - 1,
         })
 
-        // Check for cascading matches
+        // Check for cascading matches after a longer delay
         setTimeout(() => {
           const { matches } = findMatches(clearedGrid)
           if (matches) {
             processCascadingMatches(clearedGrid)
           } else {
+            // After all cascading matches are complete, set the new gravity direction for the next move
+            const newDirection = getRandomDirection()
+            set({
+              gravityDirection: newDirection,
+            })
             // Check if game over or level complete
             checkGameState()
           }
-        }, 300)
-      }, 250)
-    }, 200)
+        }, 600)
+      }, 500)
+    }, 400)
   },
 
   resetGame: () => {
@@ -1080,7 +1129,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const extraMoves = upgradesOwned.includes("extra_moves") ? 2 : 0
 
     // Randomly choose gravity direction
-    const gravityDirection = Math.random() < 0.5 ? "vertical" : "horizontal"
+    const gravityDirection = getRandomDirection()
 
     set({
       grid: createEmptyGrid(currentLevel.id),

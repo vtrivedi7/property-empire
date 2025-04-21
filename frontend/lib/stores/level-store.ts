@@ -31,116 +31,204 @@ export const useLevelStore = create<LevelState>((set, get) => ({
 
   initializeLevels: () => {
     const levels: LevelConfig[] = [
+      // Suburban Region (1)
       {
         id: 1,
         regionId: 1,
-        name: "Level 1",
+        name: "Suburban Start",
         targetScore: 100,
         moveLimit: 20,
         unlocked: true,
+        description: "Welcome to the suburbs! Start building your property empire.",
       },
       {
         id: 2,
         regionId: 1,
-        name: "Level 2",
+        name: "Neighborhood Growth",
         targetScore: 150,
         moveLimit: 18,
         unlocked: false,
+        description: "Expand your neighborhood with more properties.",
         obstacles: {
           lockedGates: 1,
           foundationBlocks: 0,
-          lockedCards: 1,
         },
       },
       {
         id: 3,
         regionId: 1,
-        name: "Level 3",
+        name: "Community Hub",
         targetScore: 200,
         moveLimit: 16,
         unlocked: false,
+        description: "Create a thriving community center.",
         obstacles: {
           lockedGates: 1,
           foundationBlocks: 1,
-          lockedCards: 1,
         },
       },
+
+      // Urban Region (2)
       {
         id: 4,
         regionId: 2,
-        name: "Level 4",
+        name: "City Entrance",
         targetScore: 250,
         moveLimit: 20,
         unlocked: false,
+        description: "Welcome to the city! Build your first urban properties.",
         obstacles: {
           lockedGates: 2,
           foundationBlocks: 1,
-          lockedCards: 2,
         },
       },
       {
         id: 5,
         regionId: 2,
-        name: "Level 5",
+        name: "Downtown Development",
         targetScore: 300,
         moveLimit: 18,
         unlocked: false,
+        description: "Develop the downtown area with modern buildings.",
         obstacles: {
           lockedGates: 2,
           foundationBlocks: 2,
-          lockedCards: 2,
         },
       },
       {
         id: 6,
         regionId: 2,
-        name: "Level 6",
+        name: "Business District",
         targetScore: 350,
         moveLimit: 16,
         unlocked: false,
+        description: "Create a bustling business district.",
         obstacles: {
           lockedGates: 3,
           foundationBlocks: 2,
-          lockedCards: 3,
         },
       },
+
+      // Coastal Region (3)
       {
         id: 7,
         regionId: 3,
-        name: "Level 7",
+        name: "Beachfront Properties",
         targetScore: 400,
         moveLimit: 22,
         unlocked: false,
+        description: "Build luxurious beachfront properties.",
         obstacles: {
           lockedGates: 3,
           foundationBlocks: 3,
-          lockedCards: 3,
         },
       },
       {
         id: 8,
         regionId: 3,
-        name: "Level 8",
+        name: "Marina Development",
         targetScore: 450,
         moveLimit: 20,
         unlocked: false,
+        description: "Develop a modern marina complex.",
         obstacles: {
           lockedGates: 4,
           foundationBlocks: 3,
-          lockedCards: 4,
         },
       },
       {
         id: 9,
         regionId: 3,
-        name: "Level 9",
+        name: "Coastal Paradise",
         targetScore: 500,
         moveLimit: 18,
         unlocked: false,
+        description: "Create a coastal paradise with premium properties.",
         obstacles: {
           lockedGates: 4,
           foundationBlocks: 4,
-          lockedCards: 4,
+        },
+      },
+
+      // Mountain Region (4)
+      {
+        id: 10,
+        regionId: 4,
+        name: "Mountain Retreat",
+        targetScore: 550,
+        moveLimit: 24,
+        unlocked: false,
+        description: "Build a peaceful mountain retreat.",
+        obstacles: {
+          lockedGates: 4,
+          foundationBlocks: 4,
+        },
+      },
+      {
+        id: 11,
+        regionId: 4,
+        name: "Ski Resort",
+        targetScore: 600,
+        moveLimit: 22,
+        unlocked: false,
+        description: "Develop a world-class ski resort.",
+        obstacles: {
+          lockedGates: 5,
+          foundationBlocks: 4,
+        },
+      },
+      {
+        id: 12,
+        regionId: 4,
+        name: "Mountain Village",
+        targetScore: 650,
+        moveLimit: 20,
+        unlocked: false,
+        description: "Create a charming mountain village.",
+        obstacles: {
+          lockedGates: 5,
+          foundationBlocks: 5,
+        },
+      },
+
+      // Metro Region (5)
+      {
+        id: 13,
+        regionId: 5,
+        name: "Metro Center",
+        targetScore: 700,
+        moveLimit: 26,
+        unlocked: false,
+        description: "Build the heart of the metropolitan area.",
+        obstacles: {
+          lockedGates: 5,
+          foundationBlocks: 5,
+        },
+      },
+      {
+        id: 14,
+        regionId: 5,
+        name: "Financial District",
+        targetScore: 750,
+        moveLimit: 24,
+        unlocked: false,
+        description: "Develop a thriving financial district.",
+        obstacles: {
+          lockedGates: 6,
+          foundationBlocks: 5,
+        },
+      },
+      {
+        id: 15,
+        regionId: 5,
+        name: "Metropolitan Empire",
+        targetScore: 800,
+        moveLimit: 22,
+        unlocked: false,
+        description: "Create your ultimate property empire.",
+        obstacles: {
+          lockedGates: 6,
+          foundationBlocks: 6,
         },
       },
     ]
@@ -174,9 +262,11 @@ export const useLevelStore = create<LevelState>((set, get) => ({
       ),
     }))
 
-    // Unlock the next level
-    const nextLevelId = levelId + 1
-    get().unlockLevel(nextLevelId)
+    // Unlock the next level if at least 1 star is earned
+    if (stars >= 1) {
+      const nextLevelId = levelId + 1
+      get().unlockLevel(nextLevelId)
+    }
 
     // Check if all levels in the current region have at least 1 star
     const { unlockNextRegion } = useRegionStore.getState()
