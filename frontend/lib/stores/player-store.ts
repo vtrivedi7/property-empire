@@ -2,6 +2,7 @@
 
 import { create } from "zustand"
 import type { Resources, UpgradeCost } from "@/lib/types"
+import { useUserStore } from "@/lib/stores/user-store"
 
 interface PlayerState {
   energy: number
@@ -46,6 +47,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   upgradesOwned: [],
 
   initializePlayer: () => {
+    // Always reset to initial state
     set({
       energy: 5,
       maxEnergy: 5,
@@ -93,18 +95,26 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   addResources: (newResources: Resources) => {
+    const { userId } = useUserStore.getState()
+    if (!userId) return // Don't add resources if no user is logged in
+
     set((state) => {
       const resourceYieldBonus = state.upgradesOwned.includes("resource_yield") ? 1 : 0
       
+      const updatedResources = {
+        lumber: state.resources.lumber + (newResources.lumber || 0) * (1 + resourceYieldBonus),
+        brick: state.resources.brick + (newResources.brick || 0) * (1 + resourceYieldBonus),
+        steel: state.resources.steel + (newResources.steel || 0) * (1 + resourceYieldBonus),
+        cash: state.resources.cash + (newResources.cash || 0) * (1 + resourceYieldBonus),
+        glass: state.resources.glass + (newResources.glass || 0) * (1 + resourceYieldBonus),
+        concrete: state.resources.concrete + (newResources.concrete || 0) * (1 + resourceYieldBonus),
+      }
+
+      // Update the game state with new resources
+      useUserStore.getState().updateGameState({ resources: updatedResources })
+
       return {
-        resources: {
-          lumber: state.resources.lumber + (newResources.lumber || 0) * (1 + resourceYieldBonus),
-          brick: state.resources.brick + (newResources.brick || 0) * (1 + resourceYieldBonus),
-          steel: state.resources.steel + (newResources.steel || 0) * (1 + resourceYieldBonus),
-          cash: state.resources.cash + (newResources.cash || 0) * (1 + resourceYieldBonus),
-          glass: state.resources.glass + (newResources.glass || 0) * (1 + resourceYieldBonus),
-          concrete: state.resources.concrete + (newResources.concrete || 0) * (1 + resourceYieldBonus),
-        },
+        resources: updatedResources,
       }
     })
   },
