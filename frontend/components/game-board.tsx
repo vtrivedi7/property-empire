@@ -44,6 +44,27 @@ export default function GameBoard() {
     return () => window.removeEventListener("resize", updateSize)
   }, [])
 
+  // Add initial tile selection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (!focusedTile) {
+          // Select top-left tile if no tile is focused
+          setFocusedTile({ row: 0, col: 0 })
+          selectTile(0, 0)
+          playSound("click")
+          if (settings.vibrationEnabled) {
+            vibrate(30)
+          }
+          return
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [focusedTile, selectTile, settings.soundEnabled, settings.vibrationEnabled])
+
   // Add touch gesture handling
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0]
